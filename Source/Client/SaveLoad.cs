@@ -29,7 +29,11 @@ namespace Multiplayer.Client
             var localFactionId = Multiplayer.RealPlayerFaction.loadID;
             var mapCmds = new Dictionary<int, Queue<ScheduledCommand>>();
             var planetRenderMode = Find.World.renderer.wantedMode;
-            var chatWindow = ChatWindow.Opened;
+            var openWindows = Find.WindowStack?.Windows;
+            if (openWindows != null) {
+                Log.Message($"Got this many open windows: {openWindows.Count()}");
+                Log.Message($"Heres them all if you want {openWindows.Join(win => win.ToString())}");
+            }
             var oldSong = Find.MusicManagerPlay.lastStartedSong;
             var oldSongTime = Find.MusicManagerPlay.audioSource?.time;
 
@@ -77,9 +81,6 @@ namespace Multiplayer.Client
                 m.AsyncTime().cmds = mapCmds[m.uniqueID];
             }
 
-            if (chatWindow != null)
-                Find.WindowStack.Add_KeepRect(chatWindow);
-
             if (oldSong != null && oldSongTime != null) {
                 // resume previous music track
                 Find.MusicManagerPlay.MusicUpdate(); // seems to need to run for a tick after a reload to avoid null exceptions
@@ -87,6 +88,23 @@ namespace Multiplayer.Client
                 Find.MusicManagerPlay.songWasForced = false; // make it look like this song was chosen naturally, so the leadin to the next song is smooth
                 Find.MusicManagerPlay.recentSongs.Dequeue();
                 Find.MusicManagerPlay.audioSource.time = (float) oldSongTime;
+            }
+
+            if (openWindows != null) {
+                foreach (var openWindow in openWindows) {
+                    if (openWindow is ImmediateWindow) {
+                        continue;
+                    }
+
+                    if (openWindow is ChatWindow) {
+                        Find.WindowStack.Add_KeepRect(openWindow);
+                    }
+                    else if (openWindow is IInspectPane openPane) {
+                        Log.Message($"Adding {openWindow} {openPane} {openPane.OpenTabType}");
+                        Find.WindowStack.Add_KeepRect(openWindow);
+                        // InspectPaneUtility.OpenTab(openPane.OpenTabType); // doesn't seem to help
+                    }
+                }
             }
 
             var selectedReader = new ByteReader(selectedData.ToArray()) { context = new MpContext() { map = Find.CurrentMap } };
