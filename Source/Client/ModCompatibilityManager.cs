@@ -62,7 +62,7 @@ namespace Multiplayer.Client
 
     public class ModCompatibility
     {
-        public int status;
+        public string status;
         public string name;
         public long workshopId;
         public string notes = "";
