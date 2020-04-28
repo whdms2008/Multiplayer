@@ -113,11 +113,11 @@ namespace Multiplayer.Client.Comp
 
         public static Dictionary<Quest, MapAsyncTimeComp> QuestAsyncTime = new Dictionary<Quest, MapAsyncTimeComp>();
 
-        static bool Prefix(Quest __instance, Pawn by)
+        static void Prefix(Quest __instance, Pawn by, ref MapAsyncTimeComp __state)
         {
             if (__instance.State != QuestState.NotYetAccepted)
             {
-                return true;
+                return; // don't return true or we'll break the SyncMethod
             }
 
             //Have to cache this since its a lookup
@@ -131,9 +131,7 @@ namespace Multiplayer.Client.Comp
                 {
                     foreach (var part in __instance.parts.Where(x => mapParentQuestPartTypes.Contains(x.GetType())))
                     {
-                        var mapParent = part.GetType().GetField("mapParent").GetValue(part) as MapParent;
-                        if (mapParent != null)
-                        {
+                        if (part.GetType()?.GetField("mapParent")?.GetValue(part) is MapParent mapParent) {
                             mapAsyncTimeComp = GetAsyncTimeFromMapParent(mapParent);
                             if (mapAsyncTimeComp != null) break;
                         }
@@ -145,19 +143,24 @@ namespace Multiplayer.Client.Comp
             if (mapAsyncTimeComp == null)
             {
                 Log.Message($"Could Not Find AsyncTimeMap!", true);
-                __instance.acceptanceTick = Find.TickManager.TicksGame;
             }
             //Does have a targetted map so using that maps AsyncTime
             else
             {
                 QuestAsyncTime[__instance] = mapAsyncTimeComp;
-                __instance.acceptanceTick = mapAsyncTimeComp.mapTicks;
+                mapAsyncTimeComp.PreContext();
+                __state = mapAsyncTimeComp;
             }
 
-            __instance.accepterPawn = by;
-            __instance.dismissed = false;
-            __instance.Initiate();
-            return true;
+            return false;
+        }
+
+        static void Postfix(Quest __instance, MapAsyncTimeComp __state)
+        {
+            if (__state != null)
+            {
+                __state.PostContext();
+            }
         }
 
         public static MapAsyncTimeComp GetAsyncTimeFromMapParent(MapParent mapParent)
