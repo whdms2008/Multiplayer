@@ -5,6 +5,7 @@ using RimWorld.QuestGen;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Verse;
 
 namespace Multiplayer.Client.Comp
 {
@@ -53,7 +54,21 @@ namespace Multiplayer.Client.Comp
             __state?.PostContext();
         }
     }
-#if false
+
+    [HarmonyPatch(typeof(Quest), nameof(Quest.MakeRaw))]
+    static class Quest_MakeRawPatch
+    {
+        static void Prefix()
+        {
+            Log.Warning("Hit Quest.MakeRaw, unsure how to patch");
+        }
+
+        // static void Postfix(MapAsyncTimeComp __state)
+        // {
+        //     __state?.PostContext();
+        // }
+    }
+
     [HarmonyPatch(typeof(Quest), nameof(Quest.SetInitiallyAccepted))]
     static class SetContextForQuestSetInitiallyAccepted
     {
@@ -83,7 +98,7 @@ namespace Multiplayer.Client.Comp
             __state?.PostContext();
         }
     }
-#endif
+
     [HarmonyPatch(typeof(Quest), nameof(Quest.Accept))]
     public static class SetTicksForQuestsBasedOnMap
     {
