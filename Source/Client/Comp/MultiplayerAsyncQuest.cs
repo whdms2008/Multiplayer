@@ -61,6 +61,8 @@ namespace Multiplayer.Client.Comp
         static void Prefix()
         {
             Log.Warning("Hit Quest.MakeRaw, unsure how to patch");
+            // todo: patch Quest.AddPart, looking for a map-based part,
+            // using the first one we find to update quest.appearanceTick to that map's time
         }
 
         // static void Postfix(MapAsyncTimeComp __state)

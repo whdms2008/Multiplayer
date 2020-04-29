@@ -41,9 +41,20 @@ namespace Multiplayer.Client
             }
         }
 
-        public TimeSpeed TimeSpeed
-        {
-            get => Find.TickManager.CurTimeSpeed;
+        public TimeSpeed TimeSpeed {
+            get {
+                if (MultiplayerWorldComp.asyncTime) {
+                    // todo: consider moving to on write (TimeControl.SendTimeChange), probably better performance
+                    var mapSpeeds = Find.Maps.Select(m => m.AsyncTime().TimeSpeed)
+                        .Where(timeSpeed => timeSpeed != TimeSpeed.Paused)
+                        .ToList();
+                    if (mapSpeeds.NullOrEmpty()) {
+                        return TimeSpeed.Paused;
+                    }
+                    return mapSpeeds.Min();
+                }
+                return Find.TickManager.CurTimeSpeed;
+            }
             set => Find.TickManager.CurTimeSpeed = value;
         }
 
