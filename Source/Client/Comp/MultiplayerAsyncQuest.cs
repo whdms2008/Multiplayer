@@ -15,11 +15,11 @@ namespace Multiplayer.Client.Comp
     [HarmonyPatch(typeof(SettlementAbandonUtility), nameof(SettlementAbandonUtility.Abandon))]
     static class RemoveMapCacheOnAbandon
     {
-        static void Prefix(MapParent mapParent)
+        static void Prefix(MapParent settlement)
         {
             if (!MultiplayerWorldComp.asyncTime) return;
 
-            var mapAsyncTimeComp = mapParent.Map.AsyncTime();
+            var mapAsyncTimeComp = settlement.Map.AsyncTime();
             if (mapAsyncTimeComp != null)
             {
                 MultiplayerAsyncQuest.TryRemoveCachedMap(mapAsyncTimeComp);
@@ -73,11 +73,11 @@ namespace Multiplayer.Client.Comp
     [HarmonyPatch]
     static class SetContextForQuest
     {
-        static IEnumerable<MethodInfo> TargetMethod()
+        static IEnumerable<MethodInfo> TargetMethods()
         {
-            yield return AccessTools.Method(typeof(Quest), nameof(Quest.TicksSinceAppeared));
-            yield return AccessTools.Method(typeof(Quest), nameof(Quest.TicksSinceAccepted));
-            yield return AccessTools.Method(typeof(Quest), nameof(Quest.TicksSinceCleanup));
+            yield return AccessTools.Method(typeof(Quest), "get_" + nameof(Quest.TicksSinceAppeared));
+            yield return AccessTools.Method(typeof(Quest), "get_" + nameof(Quest.TicksSinceAccepted));
+            yield return AccessTools.Method(typeof(Quest), "get_" + nameof(Quest.TicksSinceCleanup));
             yield return AccessTools.Method(typeof(Quest), nameof(Quest.SetInitiallyAccepted));
             yield return AccessTools.Method(typeof(Quest), nameof(Quest.CleanupQuestParts));
         }
