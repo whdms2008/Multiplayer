@@ -6,6 +6,7 @@ namespace Multiplayer.Common
         public const int Protocol = 18;
 
         public const string apiAssemblyName = "0MultiplayerAPI";
+        public const string compatibilityModId = "rwmt.multiplayercompatibility";
 
 #if DEBUG
         public const bool IsDebug = true;

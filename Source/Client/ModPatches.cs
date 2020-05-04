@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using Multiplayer.Common;
 using UnityEngine;
 using Verse;
 
@@ -13,6 +14,7 @@ namespace Multiplayer.Client
 {
     static class ModPatches
     {
+        private static MethodInfo FluffysModButtonManager_ActiveMods;
         public static void Init()
         {
             var harmony = Multiplayer.harmony;
@@ -26,6 +28,13 @@ namespace Multiplayer.Client
                     new HarmonyMethod(typeof(PageModsPatch), nameof(PageModsPatch.FluffyModManager_DoModButton)),
                     new HarmonyMethod(typeof(PageModsPatch), nameof(PageModsPatch.Postfix))
                 );
+                try {
+                    var fluffysModButtonManagerType = MpReflection.GetTypeByName("ModManager.ModButtonManager");
+                    FluffysModButtonManager_ActiveMods = AccessTools.DeclaredProperty(fluffysModButtonManagerType, "ActiveMods").GetGetMethod(true);
+                }
+                catch (Exception e) {
+                    Log.Warning("MP: Failed to read Fluffy's ModButtonManager");
+                }
             }
 
             var cancelForArbiter = new HarmonyMethod(typeof(CancelForArbiter), "Prefix");
@@ -92,6 +101,20 @@ namespace Multiplayer.Client
 
             Multiplayer.harmony.Patch(method, prefix, postfix, transpiler);
         }
+
+        public static IEnumerable<ModMetaData> ActiveMods {
+            get {
+                if (FluffysModButtonManager_ActiveMods != null) {
+                    return (List<ModMetaData>) FluffysModButtonManager_ActiveMods.Invoke(null, null);
+                }
+
+                return ModsConfig.ActiveModsInLoadOrder;
+            }
+        }
+
+        public static bool HasMpCompatibilityMod {
+            get { return ModPatches.ActiveMods.Any(mod => mod.PackageId == MpVersion.compatibilityModId); }
+        }
     }
 
     // Hold shift in the mod list to highlight XML mods
@@ -128,18 +151,26 @@ namespace Multiplayer.Client
                 tooltip = "4 = Everything works (XML-only mod)";
             }
 
-            if (Multiplayer.modsCompatibility.ContainsKey(mod.publishedFileIdInt.ToString())) {
-                var compat = Multiplayer.modsCompatibility[mod.publishedFileIdInt.ToString()];
-                if (compat == 1) {
+            ModCompatibility modCompatibility = ModCompatibilityManager.LookupByWorkshopId(mod.GetPublishedFileId())
+                                                ?? ModCompatibilityManager.LookupByName(mod.Name); // fallback to inaccurate Name for local/non-steam installs
+            if (modCompatibility != null) {
+                var compat = modCompatibility.status;
+                var requiresMpCompatMod = modCompatibility.status.Contains("*");
+                if (requiresMpCompatMod && ModPatches.HasMpCompatibilityMod) {
+                    compat = "4";
+                }
+
+                int.TryParse(compat.Substring(0, 1), out var compatScore);
+                if (compatScore == 1) {
                     currentModCompat = $"<color=red>{compat}</color>";
                     tooltip = "1 = Does not work";
-                } else if (compat == 2) {
+                } else if (compatScore == 2) {
                     currentModCompat = $"<color=orange>{compat}</color>";
                     tooltip = "2 = Partially works, but major features don't work";
-                } else if (compat == 3) {
+                } else if (compatScore == 3) {
                     currentModCompat = $"<color=yellow>{compat}</color>";
                     tooltip = "3 = Mostly works, some minor features don't work";
-                } else if (compat == 4) {
+                } else if (compatScore == 4) {
                     currentModCompat = $"<color=green>{compat}</color>";
                     tooltip = "4 = Everything works";
                 }
@@ -147,12 +178,16 @@ namespace Multiplayer.Client
                     currentModCompat = $"<color=grey>{compat}</color>";
                     tooltip = "0 = Unknown; please report findings to #mod-report in our Discord";
                 }
+
+                if (modCompatibility.notes != "") {
+                    tooltip += $"\n\n{modCompatibility.notes}";
+                }
             }
 
             if (tooltip != "") {
                 var tooltipRect = new Rect(rect);
                 tooltipRect.xMax = tooltipRect.xMin + 50f;
-                TooltipHandler.TipRegion(tooltipRect, new TipSignal($"Multiplayer Compatibility: {tooltip}", mod.GetHashCode() * 3312));
+                TooltipHandler.TipRegion(tooltipRect, new TipSignal($"{"MpMultiplayerCompatibility".Translate()}: {tooltip}", mod.GetHashCode() * 3312));
             }
         }
 
