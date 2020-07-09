@@ -111,9 +111,9 @@
   <MpNotInMultiplayer>멀티중 아님</MpNotInMultiplayer>
 
   <MpPauseOnAutosave>자동저장 후 일시정지</MpPauseOnAutosave>
-  <MpAppendNameToAutosave>Append Name to Autosave</MpAppendNameToAutosave>
-  <MpPauseAutosaveCounter>Pause autosave counter</MpPauseAutosaveCounter>
-  <MpPauseAutosaveCounterDesc>Pauses the counter along with the game preventing autosaving while time is paused.</MpPauseAutosaveCounterDesc>
+  <MpAppendNameToAutosave>자동 저장후 이름 추가</MpAppendNameToAutosave>
+  <MpPauseAutosaveCounter>자동 저장중 카운터 일시 중지</MpPauseAutosaveCounter>
+  <MpPauseAutosaveCounterDesc>게임과 함께 카운터를 일시 중지하여 시간이 정지된 동안 자동 저장을 방지하십시오.</MpPauseAutosaveCounterDesc>
   <MpPauseOnAutosave>자동저장 시 일시정지</MpPauseOnAutosave> 
   <MpLan>LAN</MpLan>
   <MpDirect>직접 연결</MpDirect>
